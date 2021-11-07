@@ -4,59 +4,66 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// O que fazer:
-// Lançamento de uma partícula;
-// Controlar o lançamento com um botão;
-// Controlar a angulação inicial do canhão e a velocidade da partícula.
+// TODO: Controlar a angulação e a velocidade inicial do movimento
 
-// X = Xo + ( Vo * cos(alpha) ) * t;
-
-// Y = Yo + (Vo * sin(alpha)) * t - (g * t²)/2
 public class LançamentoObliquo : MonoBehaviour
 {
     public GameObject cannonBall;
+    public GameObject floor;
 
-    public float Vo;        //! passar para private
-
-    public float alpha;     //! passar para private
-
+    private float initialVelocity;
+    private float cannonAngle;
     private float g = 9.8f;
-
     private Rigidbody rigidbody; 
     private DateTime startTime;
     private Vector3 initialPosition;
+    private float floorHeight; 
     private int fire = 0;
     private bool collided = false;
-    
-    float calculateX(double time)
+
+    // Start is called before the first frame update
+    void Start()
     {
-        double Vo_x = Vo * Math.Cos(alpha);
-        double new_x = Vo_x * time;
+        startTime = DateTime.Now;
+        rigidbody = GetComponent<Rigidbody>();
+        initialPosition = cannonBall.transform.position;
+        floorHeight = floor.transform.position.y;
 
-        return (float) (new_x * fire);
-    } 
-
-    float calculateY(double time)
-    {
-        /*
-         *
-         * Calculate the current position in the y axis.
-         * This is calculated using the equation Y = Vo * t + (a * t^2) / 2
-         *
-         * In this case, Vo is the initial velocity in the y axis, therefore
-         * it is the object initial velocity times the sin angle.
-         * Acceleration is the gravity acceleration, with a positive referencial
-         * in the opposite direction of the plane.
-         * Time is the calculated time in seconds since the cannon ball firing. 
-         *
-         */
-        
-        double Vo_y = Vo * Math.Sin(alpha);
-        double new_y = (Vo_y * time) - ((g * time * time) / 2);
-
-        return (float) (new_y * fire);
+        initialVelocity = 10;                           //! Remove it when create controllers
+        cannonAngle = (3.14f / 4);               //! Remove it when create controllers
     }
 
+    // Update is called once per frame
+    void Update()
+    {
+        if (!collided)
+        {
+            update_cannonBall();
+        }
+    }
+
+    /*
+     * Updates cannon ball position.
+     *
+     * It is calculated its position in each frame using basic physics 
+     * equations. Its movement can be decompoused in two main equations:
+     *
+     * the x axis has a constant velocity movement, since there is no force
+     * acting on it after the ball launch.
+     *
+     * the y axis, in other hand, has a single main force acting on the 
+     * cannon ball (not considering the drag force, which is considered 
+     * irrelevant): the gravity, which has a constant acceleration.
+     *
+     * So, to calculate the current x and y axises we can use these 
+     * equations:
+     *
+     * x axis: X = Xo + Vo * t;
+     * y axis: Y = Yo + Vo * t + (a * t^2) / 2
+     *
+     * More explanation is made in individual documentation.
+     *
+     */
     void update_cannonBall()
     {
         double time = getTime();
@@ -67,27 +74,89 @@ public class LançamentoObliquo : MonoBehaviour
         float y = initialPosition.y + calculateY(time);
         float z = initialPosition.z;
 
-        // Check for collision
+        testForCollision(y);
 
         cannonBall.transform.position = new Vector3(x, y, z); 
     }
-
-    // Start is called before the first frame update
-    void Start()
+    
+    /*
+     * Calculate the current position in the x axis.
+     *  This is calculated using the equation X = Vo * t
+     * 
+     * In this case, Vo is the initial velocity in the x axis, therefore
+     * it is the object initial velocity times the angle's cos.
+     * Time is the calculated time in seconds (with milliseconds) since the
+     * cannon ball firing.
+     *
+     */
+    float calculateX(double time)
     {
-        startTime = DateTime.Now;
-        rigidbody = GetComponent<Rigidbody>();
-        initialPosition = cannonBall.transform.position;
+        double Vo_x = initialVelocity * Math.Cos(cannonAngle);
+        double new_x = Vo_x * time;
+
+        return (float) (new_x * fire);
     }
 
-    // Update is called once per frame
-    void Update()
+    /*
+     * Calculate the current position in the y axis.
+     * This is calculated using the equation Y = Vo * t + (a * t^2) / 2
+     *
+     * In this case, Vo is the initial velocity in the y axis, therefore
+     * it is the object initial velocity times the angle's sin.
+     * Acceleration is the gravity acceleration, with a positive referencial
+     * in the opposite direction of the plane.
+     * Time is the calculated time in seconds (with milliseconds) since the 
+     * cannon ball firing. 
+     *
+     */
+    float calculateY(double time)
     {
-        if (!collided) {
-            update_cannonBall();
+        double Vo_y = initialVelocity * Math.Sin(cannonAngle);
+        double new_y = (Vo_y * time) - ((g * time * time) / 2);
+
+        return (float) (new_y * fire);
+    } 
+
+    /*
+     * Calculates the time of execution in the program since the last time
+     * the variable startTime was setted. It gets the elapsed time in
+     * milliseconds and divides it by 1000, getting the value in seconds, 
+     * but with its milliseconds information.
+     *
+     * This is important so the movement is smooth, with a false sense of 
+     * continuous movement, if the time was purely in seconds, it would be a 
+     * series of teletransportations. If the time was purely in milliseconds
+     * it would be way too fast.
+     */
+    double getTime()
+    {
+        return (((DateTime.Now - startTime)).TotalMilliseconds) / 1000;
+    }
+
+    /*
+     * Checks if the current height of the object is equal or less than the
+     * floor height, if so, stop movement.
+     *
+     * This is used instead of the collision checker in the Rigidbody
+     * component because of constant failures in which the ball just doesn't
+     * stop its movement.
+     *
+     */
+    void testForCollision(float currentHeight)
+    {
+        // TODO: Remove this hardcoded number
+        if ((currentHeight - 0.5) <= floorHeight)
+        {
+            collided = true;
         }
     }
 
+    /*
+     * This function is supposed to be called on the press of a button.
+     * It fires the cannon ball by setting again the boolean collided 
+     * variable, setting again the startTime and changing the fire value
+     * to 1, so the add values to the x and y axis is not 0.
+     */
     public void fireButton()
     {
         collided = false;
@@ -95,16 +164,11 @@ public class LançamentoObliquo : MonoBehaviour
         fire = 1;
     }
 
-    double getTime()
-    {
-        return (((DateTime.Now - startTime)).TotalMilliseconds) / 1000;
-    }
-
-    void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.name == "Plano")
-        {
-            collided = true;
-        }
-    }
+    // void OnCollisionEnter(Collision collision)
+    // {
+    //     if (collision.gameObject.name == "Plano")
+    //     {
+    //         collided = true;
+    //     }
+    // }
 }
