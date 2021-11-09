@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using Valve.VR.InteractionSystem;
 
 // TODO: Controlar a angulação e a velocidade inicial do movimento
@@ -23,7 +24,7 @@ public class LançamentoObliquo : MonoBehaviour
     private Vector3 initialPosition;
     private float floorHeight; 
     private int fire = 0;
-    private bool collided = false;
+    private bool collided = true;
     private float linearInit;
     private float linearEnd;
 
@@ -186,12 +187,22 @@ public class LançamentoObliquo : MonoBehaviour
      */
     public void fireButton()
     {
-        Debug.Log(angleLinearMapping.value);
+        if (collided == true)
+        {
+            initialVelocity = velocityLinearMapping.value * 10 * cannonBall.transform.localScale.x;
+            collided = false;
+            startTime = DateTime.Now;
+            fire = 1;
+            playSound();
+        }
+    }
 
-        initialVelocity = velocityLinearMapping.value * 10 * cannonBall.transform.localScale.x;
-        collided = false;
-        startTime = DateTime.Now;
-        fire = 1;
+    private void playSound()
+    {
+        AudioSource audioData;
+
+        audioData = cannon.GetComponent<AudioSource>();
+        audioData.Play(0);
     }
 
     // void OnCollisionEnter(Collision collision)
