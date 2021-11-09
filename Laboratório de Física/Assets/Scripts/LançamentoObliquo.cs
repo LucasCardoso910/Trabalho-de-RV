@@ -3,13 +3,17 @@ using System.Globalization;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Valve.VR.InteractionSystem;
 
 // TODO: Controlar a angulação e a velocidade inicial do movimento
 
 public class LançamentoObliquo : MonoBehaviour
 {
     public GameObject cannonBall;
+    public GameObject cannon;
     public GameObject floor;
+    public LinearMapping velocityLinearMapping;
+    public LinearMapping angleLinearMapping;
 
     private float initialVelocity;
     private float cannonAngle;
@@ -20,6 +24,8 @@ public class LançamentoObliquo : MonoBehaviour
     private float floorHeight; 
     private int fire = 0;
     private bool collided = false;
+    private float linearInit;
+    private float linearEnd;
 
     // Start is called before the first frame update
     void Start()
@@ -29,13 +35,17 @@ public class LançamentoObliquo : MonoBehaviour
         initialPosition = cannonBall.transform.position;
         floorHeight = floor.transform.position.y;
 
-        initialVelocity = 10;                           //! Remove it when create controllers
-        cannonAngle = (3.14f / 4);               //! Remove it when create controllers
+        // linearInit = startPoint.transform.z;
+        // linearEnd = endPoint.transform.z;
+
+        initialVelocity = 10;                     //! Remove it when create controllers
+        cannonAngle = (float) -(Math.PI / 4);               //! Remove it when create controllers
     }
 
     // Update is called once per frame
     void Update()
     {
+        updateCannonAngle();
         if (!collided)
         {
             update_cannonBall();
@@ -64,7 +74,7 @@ public class LançamentoObliquo : MonoBehaviour
      * More explanation is made in individual documentation.
      *
      */
-    void update_cannonBall()
+    private void update_cannonBall()
     {
         double time = getTime();
 
@@ -89,7 +99,7 @@ public class LançamentoObliquo : MonoBehaviour
      * cannon ball firing.
      *
      */
-    float calculateX(double time)
+    private float calculateX(double time)
     {
         double Vo_x = initialVelocity * Math.Cos(cannonAngle);
         double new_x = Vo_x * time;
@@ -109,13 +119,30 @@ public class LançamentoObliquo : MonoBehaviour
      * cannon ball firing. 
      *
      */
-    float calculateY(double time)
+    private float calculateY(double time)
     {
         double Vo_y = initialVelocity * Math.Sin(cannonAngle);
         double new_y = (Vo_y * time) - ((g * time * time) / 2);
 
         return (float) (new_y * fire);
     } 
+
+    private void updateCannonAngle()
+    {
+        cannonAngle = (float) (angleLinearMapping.value * 2 * Math.PI) / 3f;
+        cannonAngle -= (float) (Math.PI / 6);
+
+        cannon.transform.eulerAngles = new Vector3(
+            -(radToDegrees(cannonAngle)),
+            cannon.transform.eulerAngles.y,
+            cannon.transform.eulerAngles.z
+        );
+    }
+
+    private float radToDegrees(float radAngle)
+    {
+        return (radAngle * 360) / (float) (2 * Math.PI);
+    }
 
     /*
      * Calculates the time of execution in the program since the last time
@@ -128,7 +155,7 @@ public class LançamentoObliquo : MonoBehaviour
      * series of teletransportations. If the time was purely in milliseconds
      * it would be way too fast.
      */
-    double getTime()
+    private double getTime()
     {
         return (((DateTime.Now - startTime)).TotalMilliseconds) / 1000;
     }
@@ -142,7 +169,7 @@ public class LançamentoObliquo : MonoBehaviour
      * stop its movement.
      *
      */
-    void testForCollision(float currentHeight)
+    private void testForCollision(float currentHeight)
     {
         // TODO: Remove this hardcoded number
         if ((currentHeight - 0.5) <= floorHeight)
@@ -159,6 +186,9 @@ public class LançamentoObliquo : MonoBehaviour
      */
     public void fireButton()
     {
+        Debug.Log(angleLinearMapping.value);
+
+        initialVelocity = velocityLinearMapping.value * 10 * cannonBall.transform.localScale.x;
         collided = false;
         startTime = DateTime.Now;
         fire = 1;
