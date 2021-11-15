@@ -6,33 +6,30 @@ using UnityEngine;
 using UnityEngine.Audio;
 using Valve.VR.InteractionSystem;
 
-// TODO: Controlar a angulação e a velocidade inicial do movimento
-
 public class LançamentoObliquo : MonoBehaviour
 {
     public GameObject cannonBall;
     public GameObject cannon;
     public GameObject floor;
+    public GameObject tracker;
     public LinearMapping velocityLinearMapping;
     public LinearMapping angleLinearMapping;
+    public CircularDrive circularDrive;
 
     private float initialVelocity;
     private float cannonAngle;
     private float g = 9.8f;
-    private Rigidbody rigidbody; 
     private DateTime startTime;
+    private double previousTime;
     private Vector3 initialPosition;
     private float floorHeight; 
     private int fire = 0;
     private bool collided = true;
-    private float linearInit;
-    private float linearEnd;
 
     // Start is called before the first frame update
     void Start()
     {
         startTime = DateTime.Now;
-        rigidbody = GetComponent<Rigidbody>();
         initialPosition = cannonBall.transform.position;
         floorHeight = floor.transform.position.y;
 
@@ -40,7 +37,7 @@ public class LançamentoObliquo : MonoBehaviour
         // linearEnd = endPoint.transform.z;
 
         initialVelocity = 10;                     //! Remove it when create controllers
-        cannonAngle = (float) -(Math.PI / 4);               //! Remove it when create controllers
+        cannonAngle = radToDegrees(-28);               //! Remove it when create controllers
     }
 
     // Update is called once per frame
@@ -78,8 +75,9 @@ public class LançamentoObliquo : MonoBehaviour
     private void update_cannonBall()
     {
         double time = getTime();
+        Vector3 previousPosition;
 
-        Vector3 currentPosition = cannonBall.transform.position;
+        previousPosition = cannonBall.transform.position;
 
         float x = initialPosition.x + calculateX(time); 
         float y = initialPosition.y + calculateY(time);
@@ -87,7 +85,12 @@ public class LançamentoObliquo : MonoBehaviour
 
         testForCollision(y);
 
-        cannonBall.transform.position = new Vector3(x, y, z); 
+        cannonBall.transform.position = new Vector3(x, y, z);
+        if ((time - previousTime) > 0.2) {
+            // TODO: test to use, instead of tracker, the cannonball itself
+            Instantiate(tracker, previousPosition, Quaternion.identity);
+            previousTime = time;
+        }
     }
     
     /*
@@ -130,6 +133,16 @@ public class LançamentoObliquo : MonoBehaviour
 
     private void updateCannonAngle()
     {
+        if (circularDrive.outAngle > 358){
+            circularDrive.outAngle = 358;
+            return;
+        }
+        
+        if (circularDrive.outAngle < 2) {
+            circularDrive.outAngle = 2;
+            return;
+        }
+
         cannonAngle = (float) (angleLinearMapping.value * 2 * Math.PI) / 3f;
         cannonAngle -= (float) (Math.PI / 6);
 
@@ -138,11 +151,17 @@ public class LançamentoObliquo : MonoBehaviour
             cannon.transform.eulerAngles.y,
             cannon.transform.eulerAngles.z
         );
+        
     }
 
     private float radToDegrees(float radAngle)
     {
         return (radAngle * 360) / (float) (2 * Math.PI);
+    }
+
+    private float degreesToRad(float degAngle)
+    {
+        return (degAngle * (float) (2 * Math.PI)) / 360;
     }
 
     /*
@@ -185,8 +204,17 @@ public class LançamentoObliquo : MonoBehaviour
      * variable, setting again the startTime and changing the fire value
      * to 1, so the add values to the x and y axis is not 0.
      */
-    public void fireButton()
+    public void fireButton(bool delete)
     {
+        if (delete) {
+            GameObject[] trackers;
+            trackers = GameObject.FindGameObjectsWithTag("Tracker");
+            foreach(GameObject tracker in trackers)
+            {
+                Destroy(tracker);
+            }
+        }
+
         if (collided == true)
         {
             initialVelocity = velocityLinearMapping.value * 10 * cannonBall.transform.localScale.x;
@@ -194,6 +222,7 @@ public class LançamentoObliquo : MonoBehaviour
             startTime = DateTime.Now;
             fire = 1;
             playSound();
+            previousTime = getTime();
         }
     }
 
