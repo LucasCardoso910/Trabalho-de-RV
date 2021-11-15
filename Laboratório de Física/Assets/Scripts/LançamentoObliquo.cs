@@ -18,6 +18,7 @@ public class LançamentoObliquo : MonoBehaviour
 
     private float initialVelocity;
     private float cannonAngle;
+    private float ballAngle;
     private float g = 9.8f;
     private DateTime startTime;
     private double previousTime;
@@ -35,9 +36,6 @@ public class LançamentoObliquo : MonoBehaviour
 
         // linearInit = startPoint.transform.z;
         // linearEnd = endPoint.transform.z;
-
-        initialVelocity = 10;                     //! Remove it when create controllers
-        cannonAngle = radToDegrees(-28);               //! Remove it when create controllers
     }
 
     // Update is called once per frame
@@ -105,7 +103,7 @@ public class LançamentoObliquo : MonoBehaviour
      */
     private float calculateX(double time)
     {
-        double Vo_x = initialVelocity * Math.Cos(cannonAngle);
+        double Vo_x = initialVelocity * Math.Cos(ballAngle);
         double new_x = Vo_x * time;
 
         return (float) (new_x * fire);
@@ -125,7 +123,7 @@ public class LançamentoObliquo : MonoBehaviour
      */
     private float calculateY(double time)
     {
-        double Vo_y = initialVelocity * Math.Sin(cannonAngle);
+        double Vo_y = initialVelocity * Math.Sin(ballAngle);
         double new_y = (Vo_y * time) - ((g * time * time) / 2);
 
         return (float) (new_y * fire);
@@ -218,6 +216,7 @@ public class LançamentoObliquo : MonoBehaviour
         if (collided == true)
         {
             initialVelocity = velocityLinearMapping.value * 10 * cannonBall.transform.localScale.x;
+            ballAngle = cannonAngle;
             collided = false;
             startTime = DateTime.Now;
             fire = 1;
