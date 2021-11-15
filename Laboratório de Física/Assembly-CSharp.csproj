@@ -53,6 +53,7 @@
     <UnityVersion>2019.4.31f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Assets\ControleTampar.cs" />
     <Compile Include="Assets\FeatherFall.cs" />
     <Compile Include="Assets\Gravity.cs" />
   </ItemGroup>
