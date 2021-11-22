@@ -544,6 +544,8 @@ MonoBehaviour:
   velocityLinearMapping: {fileID: 1507576567}
   angleLinearMapping: {fileID: 1013595921}
   circularDrive: {fileID: 1013595920}
+  explosionEffect: {fileID: 1121192042590650, guid: e1b08032bec16ba4eb1ae23cbd572664,
+    type: 3}
 --- !u!54 &1185924794
 Rigidbody:
   m_ObjectHideFlags: 0

@@ -15,6 +15,7 @@ public class LançamentoObliquo : MonoBehaviour
     public LinearMapping velocityLinearMapping;
     public LinearMapping angleLinearMapping;
     public CircularDrive circularDrive;
+    public GameObject explosionEffect;
 
     private float initialVelocity;
     private float cannonAngle;
@@ -26,6 +27,8 @@ public class LançamentoObliquo : MonoBehaviour
     private float floorHeight; 
     private int fire = 0;
     private bool collided = true;
+    private bool exploded = false;
+    private DateTime explosionStart;
 
     // Start is called before the first frame update
     void Start()
@@ -72,7 +75,7 @@ public class LançamentoObliquo : MonoBehaviour
      */
     private void update_cannonBall()
     {
-        double time = getTime();
+        double time = getTime(startTime);
         Vector3 previousPosition;
 
         previousPosition = cannonBall.transform.position;
@@ -173,9 +176,9 @@ public class LançamentoObliquo : MonoBehaviour
      * series of teletransportations. If the time was purely in milliseconds
      * it would be way too fast.
      */
-    private double getTime()
+    private double getTime(DateTime start)
     {
-        return (((DateTime.Now - startTime)).TotalMilliseconds) / 1000;
+        return (((DateTime.Now - start)).TotalMilliseconds) / 1000;
     }
 
     /*
@@ -185,7 +188,6 @@ public class LançamentoObliquo : MonoBehaviour
      * This is used instead of the collision checker in the Rigidbody
      * component because of constant failures in which the ball just doesn't
      * stop its movement.
-     *
      */
     private void testForCollision(float currentHeight)
     {
@@ -193,6 +195,18 @@ public class LançamentoObliquo : MonoBehaviour
         if ((currentHeight - 0.5) <= floorHeight)
         {
             collided = true;
+
+            double timeSinceExplosion = getTime(explosionStart);
+            Debug.Log(timeSinceExplosion);
+
+            if (!exploded) 
+            {
+                // Explode();
+            }
+            else if (timeSinceExplosion > 2)
+            {
+                // Destroy(explosionEffect);
+            }
         }
     }
 
@@ -204,24 +218,31 @@ public class LançamentoObliquo : MonoBehaviour
      */
     public void fireButton(bool delete)
     {
-        if (delete) {
-            GameObject[] trackers;
-            trackers = GameObject.FindGameObjectsWithTag("Tracker");
-            foreach(GameObject tracker in trackers)
-            {
-                Destroy(tracker);
-            }
-        }
-
         if (collided == true)
         {
-            initialVelocity = velocityLinearMapping.value * 10 * cannonBall.transform.localScale.x;
+            if (delete) {
+                GameObject[] trackers;
+
+                trackers = GameObject.FindGameObjectsWithTag("Tracker");
+                
+                foreach(GameObject tracker in trackers)
+                {
+                    Destroy(tracker);
+                }
+            }
+
+            initialVelocity = velocityLinearMapping.value;
+            initialVelocity *= 10 * cannonBall.transform.localScale.x;
             ballAngle = cannonAngle;
+
+            exploded = false;
             collided = false;
-            startTime = DateTime.Now;
             fire = 1;
+
             playSound();
-            previousTime = getTime();
+
+            startTime = DateTime.Now;
+            previousTime = getTime(startTime);
         }
     }
 
@@ -233,11 +254,11 @@ public class LançamentoObliquo : MonoBehaviour
         audioData.Play(0);
     }
 
-    // void OnCollisionEnter(Collision collision)
-    // {
-    //     if (collision.gameObject.name == "Plano")
-    //     {
-    //         collided = true;
-    //     }
-    // }
+    void Explode()
+    {
+        Instantiate(explosionEffect, transform.position, transform.rotation);
+        Destroy(cannonBall);
+        explosionStart = DateTime.Now;
+        exploded = true;
+    }
 }
