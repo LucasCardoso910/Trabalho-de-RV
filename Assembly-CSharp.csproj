@@ -56,9 +56,10 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\Scripts\ChangeSound.cs" />
-     <Compile Include="Assets\Scripts\IncreaseSiz.cs" />
      <Compile Include="Assets\Scripts\RelativisticDopplerEffect.cs" />
-     <Compile Include="Assets\Scripts\Rotator.cs" />
+     <Compile Include="Assets\Scripts\RotatorAmbulance.cs" />
+     <Compile Include="Assets\Scripts\RotatorRocket.cs" />
+     <Compile Include="Assets\Scripts\spaceShipVelocity.cs" />
      <None Include="Assets\Scripts\Etc\cores.txt" />
  <Reference Include="UnityEngine">
  <HintPath>C:/Program Files/Unity/Hub/Editor/2019.4.31f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>

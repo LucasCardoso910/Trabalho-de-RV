@@ -3,48 +3,125 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
+// Fazendo o foguete rodar ok
+// Conseguir o angulo de rotação do foguete ok
+// Conseguier o ângulo do efeito doppler do foguete ok
+// Aplicar o efeito doppler ao foguete
+// Criar forma de controlar a velocidade
+
 public class RelativisticDopplerEffect : MonoBehaviour
 {
+    public GameObject rotor_center;
     public GameObject spaceShip;
-    public int wavelength;
-    
-    double c = 100; //300000000
-    Dictionary<int, string> wavelength_rgb = new Dictionary<int, string>();
+    public GameObject player;
 
+    private Dictionary<int, string> wavelength_rgb = new Dictionary<int, string>();
+    private RotatorRocket rotator;
+    private double c = 100; //300000000
+    private const int initial_wavelength = 590;
+    private float radius;
+    private float distToCenter;
+    
     void Start()
     {
+        rotator = rotor_center.GetComponent<RotatorRocket>();
+        radius = getRadius();
+        distToCenter = getDistPlayerCenter();
         start_dict();
+        //velocity = spaceShip.GetComponent<spaceShipVelocity>();
         //read_file();
     }
 
     void Update()
     {
-        updateColor();
+        // Debug.Log(get_angle(rotor_center));
+        double theta = get_or(centralAngle(rotor_center));
+        // Debug.Log(theta);
+        updateColor((int) velocity_to_wavelength(initial_wavelength, rotator.speed, theta));
+    }
+
+    float getRadius()
+    {
+        Vector3 rotor_position = rotor_center.transform.position;
+        Vector3 rocket_position = spaceShip.transform.position;
+
+        return Vector3.Distance(rotor_position, rocket_position);
+    }
+
+    float getDistPlayerCenter()
+    {
+        Vector3 rotor_position = rotor_center.transform.position;
+        Vector3 player_position = player.transform.position;
+
+        return Vector3.Distance(rotor_position, player_position);
     }
     
     void read_file()
     {
         string[] text = System.IO.File.ReadAllLines(@"Etc/cores.txt");
         foreach (string line in text)
-        {   
+        {
             string[] substrings = line.Split(' ');
             int wavelength = int.Parse(substrings[0]);
             string rgb = substrings[1];
 
             wavelength_rgb.Add(wavelength, rgb);
 
-            Debug.Log(line);
+            //Debug.Log(line);
         }
     }
 
-    double velocity_to_wavelength(double wo, double v)
+    double velocity_to_wavelength(double initial_wavelength, double velocity, double theta)
     {
-        double b = v/c;
-        double w = wo * Math.Sqrt( (1 - b)/(1 + b));
-        return w;
+        // fr = fs / (y * (1 + beta * cos(theta)))
+        // v = lambda * f -> f = v / lambda
+        // wr = ws * (y * (1 + beta * cos(theta)))
+        double beta = velocity / c;
+        double gama = 1 / (Math.Sqrt(1 - Math.Pow(beta,2)));
+        return initial_wavelength * (gama * (1 + beta * Math.Cos(theta)));
     } 
 
-    void updateColor() {
+    Vector3 get_rocket_position() {
+        float x = rotor_center.transform.position.x;
+        float y = rotor_center.transform.position.y;
+        float z = rotor_center.transform.position.z;
+        float alpha = degreesToRad(rotor_center.transform.eulerAngles.y);
+
+        Vector3 position = new Vector3(x + (float) Math.Cos(alpha) * radius, y, z + (float) Math.Sin(alpha) * radius);
+        //Debug.Log(position);
+        return position;
+    }
+
+    double get_or(double alpha){
+
+        double beta = Math.Atan(Math.Sin(alpha) * radius /(distToCenter-radius*Math.Cos(alpha)));
+        
+        double Or = (-Math.PI / 2) + alpha + beta;
+
+        return Or;
+    }
+
+    float centralAngle(GameObject rotor_center){
+        float rotation = rotor_center.transform.eulerAngles.y;
+        return degreesToRad(rotation);
+    }
+
+    double get_angle(GameObject rotor_center) {
+        // Vector1: From observer to rocket
+        // Vector2: From rotor_center to rocket
+
+        Vector3 rocket_position = get_rocket_position();
+        Vector3 v1 = player.transform.position - rocket_position;
+        Vector3 v2 = rocket_position - rotor_center.transform.position;
+        return Vector3.Angle(v1, v2);
+
+        // float rotation = rotor_center.transform.eulerAngles.y;
+        // // return (Math.PI/2 - degreesToRad(rotation));
+        // return (degreesToRad(rotation) + Math.PI/2);
+    }
+
+    void updateColor(int wavelength) {
+        Debug.Log(wavelength);
         var renderer = spaceShip.GetComponent<Renderer>();
 
         int red, green, blue;
@@ -72,12 +149,16 @@ public class RelativisticDopplerEffect : MonoBehaviour
         newColor = new Color(red/255f, green/255f, blue/255f);
         renderer.material.SetColor("_Color", newColor);
     }
-    
-    // Ler arquivo de comprimento de onda e hexadecimal do txt. ok
-    // Criar objeto com uma única cor inicial (ou quase). ok
-    // Descobrir o comprimento de onda dessa cor inicial. ok
-    // Descobrir como mudar a cor de um material. ok
 
+    private float radToDegrees(float radAngle)
+    {
+        return (radAngle * 360) / (float) (2 * Math.PI);
+    }
+
+    private float degreesToRad(float degAngle)
+    {
+        return (degAngle * (float) (2 * Math.PI)) / 360;
+    }
     
     void start_dict() {
         wavelength_rgb.Add(380, "610061");
