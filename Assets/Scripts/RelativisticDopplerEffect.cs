@@ -17,8 +17,8 @@ public class RelativisticDopplerEffect : MonoBehaviour
 
     private Dictionary<int, string> wavelength_rgb = new Dictionary<int, string>();
     private RotatorRocket rotator;
-    private double c = 100; //300000000
-    private const int initial_wavelength = 590;
+    private double c = 500; //300000000
+    private const int initial_wavelength = 530;
     private float radius;
     private float distToCenter;
     
@@ -121,7 +121,6 @@ public class RelativisticDopplerEffect : MonoBehaviour
     }
 
     void updateColor(int wavelength) {
-        Debug.Log(wavelength);
         var renderer = spaceShip.GetComponent<Renderer>();
 
         int red, green, blue;
@@ -141,6 +140,7 @@ public class RelativisticDopplerEffect : MonoBehaviour
         }
         catch (Exception e)
         {
+            Debug.Log(wavelength);
             red = 0;
             green = 0;
             blue = 0;

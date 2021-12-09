@@ -10,7 +10,7 @@ public class RotatorRocket : MonoBehaviour
     public Vector3 axis;
     public double speed;
     private double radius;
-    //public LinearMapping pointer;
+    public LinearMapping linear_mapping;
 
     public double angular_speed;
     private float timeCounter=0;
@@ -22,14 +22,13 @@ public class RotatorRocket : MonoBehaviour
         float z = rocket.transform.localPosition.z;
 
         radius = Math.Sqrt(Math.Pow(x,2) + Math.Pow(y,2) + Math.Pow(z,2));
-
-        angular_speed = 50;
     }
 
     // Update is called once per frame
     void Update()
     {
         transform.Rotate(axis, ((float) angular_speed) * Time.deltaTime);
+        angular_speed = changeAngularSpeed();
         updateSpeed();
         /*
         timeCounter += time.deltaTime;
@@ -51,9 +50,8 @@ public class RotatorRocket : MonoBehaviour
         return (degAngle * (2 * Math.PI)) / 360;
     }
 
-
-    /*float changeSpeed()
+    float changeAngularSpeed()
     {
-        return pointer.value * 100;
-    }*/
+        return linear_mapping.value * 250;
+    }
 }
