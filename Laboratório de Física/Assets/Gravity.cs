@@ -9,6 +9,16 @@ public class Gravity : MonoBehaviour
     public GameObject dude1;
     private Rigidbody rb1;
     public bool ehVacuo = true;
+    public bool cooldown_change_drag = false;
+    public bool cooldown_reset_position = false;
+    public bool cooldown_enable_gravity = false;
+
+    public Vector3 pos_dude;
+    public Vector3 pos_dude1;
+    public Vector3 angle_dude;
+    public Vector3 angle_dude1;
+
+
 
     // Start is called before the first frame update
     void Start()
@@ -17,6 +27,11 @@ public class Gravity : MonoBehaviour
         rb.useGravity = false;
         rb1 = dude1.GetComponent<Rigidbody>();
         rb1.useGravity = false;
+
+        pos_dude = dude.transform.position;
+        pos_dude1 = dude1.transform.position;
+        angle_dude = dude.transform.eulerAngles;
+        angle_dude1 = dude1.transform.eulerAngles;
     }
 
     // Update is called once per frame
@@ -27,18 +42,16 @@ public class Gravity : MonoBehaviour
 
     public void SetPosition()
     {
-        dude.transform.position = new Vector3(40, 18, 14);
-        dude1.transform.position = new Vector3(30, 18, 14);
-        dude.transform.eulerAngles = new Vector3(0, -90, 90);
-        dude1.transform.eulerAngles = new Vector3(-90, 0, 90);
-
+            dude.transform.position = pos_dude;
+            dude1.transform.position = pos_dude1; 
+            dude.transform.eulerAngles = angle_dude;
+            dude1.transform.eulerAngles = angle_dude1;
     }
 
     public void EnableGravity()
     {
-        rb.useGravity = true;
-        rb1.useGravity = true;
-
+            rb.useGravity = true;
+            rb1.useGravity = true;
     }
 
     public void DisableGravity()
@@ -50,29 +63,34 @@ public class Gravity : MonoBehaviour
 
     public void ResetPosition()
     {
+        rb.velocity = new Vector3(0, 0, 0);
+        rb1.velocity = new Vector3(0, 0, 0);
         DisableGravity();
         SetPosition();
     }
 
+    public void ResetCooldown_change_drag(){
+        cooldown_change_drag = false;
+    }
+
     public void changeDrag()
     {
-        if (ehVacuo == false)
-        {
-            ehVacuo = true;
-        }
-        else if (ehVacuo == true)
-        {
-            ehVacuo = false;
-        }
+        if (cooldown_change_drag == false){
+            if (ehVacuo)
+            {
+                ehVacuo = false;
+                rb.drag = 0.2F;
+                rb1.drag = 2;
+            }
+            else
+            {
+                ehVacuo = true;
+                rb.drag = 0;
+                rb1.drag = 0;
+            }
 
-        if (ehVacuo == false)
-        {
-            rb.drag = 0.2F;
-            rb1.drag = 2;
-        }
-        else {
-            rb.drag = 0;
-            rb1.drag = 0;
+            Invoke("ResetCooldown_change_drag", 5.0f);
+            cooldown_change_drag = true;
         }
     }
 }

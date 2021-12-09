@@ -6,6 +6,7 @@ public class ControleTampar : MonoBehaviour
 {
     public Animator anim;
     private bool controler;
+    private bool cooldown_anim = false;
 
     // Update is called once per frame
     void Update()
@@ -20,15 +21,23 @@ public class ControleTampar : MonoBehaviour
         }
     }
 
+    public void ResetCooldown(){
+        cooldown_anim = false;
+    }
     public void SwitchControler()
     {
-        if (controler)
-        {
-            controler = false;
-        }
-        else
-        {
-            controler = true;
+        if(cooldown_anim == false){
+            if (controler)
+            {
+                controler = false;
+            }
+            else
+            {
+                controler = true;
+            }
+        
+        Invoke("ResetCooldown", 2.0f);
+        cooldown_anim = true;
         }
     }
 }
